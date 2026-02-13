@@ -84,44 +84,37 @@ async function sendSMS(message) {
 }
 
 /* ======================================================
-   🚨 WATER LEVEL ALERT LOGIC
+   🚨 WATER LEVEL ALERT LOGIC (LISTEN TO tank/percentage)
 ====================================================== */
 
 let alertSent = false;
 
-console.log("🔥 Attaching Firebase listener...");
+console.log("🔥 Listening to tank/percentage...");
 
-db.ref("sensorData").on(
+db.ref("tank/percentage").on(
   "value",
   async (snapshot) => {
-    const data = snapshot.val();
+    const level = snapshot.val();
 
-    if (!data) {
-      console.log("⚠️ No sensorData found");
+    if (level === null) {
+      console.log("⚠️ No tank percentage found");
       return;
     }
 
-    if (data.waterLevel === undefined) {
-      console.log("⚠️ waterLevel field missing");
-      return;
-    }
+    console.log("💧 Tank Level:", level);
 
-    const level = data.waterLevel;
-
-    console.log("💧 Water Level:", level);
-
-    // 🚨 Trigger alert above 85
+    // 🚨 Alert when above 85%
     if (level > 85 && !alertSent) {
-      console.log("🚨 Water level above 85. Sending alert...");
+      console.log("🚨 Tank level above 85%. Sending alert...");
       await sendSMS(
-        `🚨 ALERT! Water level is ${level}. Above safe limit!`
+        `🚨 ALERT! Tank water level is ${level}%. Above safe limit!`
       );
       alertSent = true;
     }
 
-    // Reset when safe
+    // Reset alert when safe
     if (level <= 85 && alertSent) {
-      console.log("✅ Water back to safe range.");
+      console.log("✅ Tank level back to safe range.");
       alertSent = false;
     }
   },
